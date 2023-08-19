@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Button, Container, Form } from "react-bootstrap";
+import { Api } from "../../api/api";
 
 function Chat() {
     const [messages, setMessages] = useState<
@@ -17,13 +18,11 @@ function Chat() {
         socket.onmessage = (event: MessageEvent) => {
             const blob = event.data;
             const reader = new FileReader();
-
             reader.onload = function () {
                 const text = reader.result as string;
                 const message = JSON.parse(text);
                 setMessages((prev) => [message, ...prev]);
             };
-
             reader.readAsText(blob);
         };
         socket.onclose = () => {
@@ -41,7 +40,25 @@ function Chat() {
             event: "message",
         };
         socket.send(JSON.stringify(message));
+        setTypingMessage("");
     };
+
+    const getMessages = async () => {
+        try {
+            const data = await Api.getMessages();
+            setMessages(
+                data.map((message) => {
+                    return { message: message.text, event: "message" };
+                })
+            );
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    useEffect(() => {
+        getMessages();
+    }, []);
 
     return (
         <Container>

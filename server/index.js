@@ -4,6 +4,7 @@ require("./db");
 require("pg");
 const cors = require("cors");
 const ws = require("ws");
+const router = require("./routes/routes");
 
 class Server {
     app = express();
@@ -26,10 +27,11 @@ class Server {
             })
         );
         this.app.use(express.json());
+        this.app.use("/api", router);
     }
 
     createWS(server) {
-        const webSocketServer = new ws.Server({server});
+        const webSocketServer = new ws.Server({ server });
         webSocketServer.on("connection", (ws) => {
             ws.on("message", (message) => {
                 webSocketServer.clients.forEach((client) =>
