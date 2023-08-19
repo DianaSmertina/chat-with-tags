@@ -1,6 +1,8 @@
+import Chat from "./components/chat/Chat";
+
 function App() {
     return (
-        <>Hi!</>
+        <Chat />
     );
 }
 
