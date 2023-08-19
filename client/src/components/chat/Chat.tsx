@@ -5,6 +5,7 @@ import { Api } from "../../api/api";
 function Chat() {
     const [messages, setMessages] = useState<
         Array<{
+            id: number;
             message: string;
             event: string;
         }>
@@ -21,7 +22,7 @@ function Chat() {
             reader.onload = function () {
                 const text = reader.result as string;
                 const message = JSON.parse(text);
-                setMessages((prev) => [message, ...prev]);
+                setMessages((prev) => [...prev, message]);
             };
             reader.readAsText(blob);
         };
@@ -35,7 +36,9 @@ function Chat() {
 
     const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const messageId = await addMessageInBd();
         const message = {
+            id: messageId,
             message: typingMessage,
             event: "message",
         };
@@ -48,11 +51,27 @@ function Chat() {
             const data = await Api.getMessages();
             setMessages(
                 data.map((message) => {
-                    return { message: message.text, event: "message" };
+                    return {
+                        id: message.message_id,
+                        message: message.text,
+                        event: "message",
+                    };
                 })
             );
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Error fetching messages:", error);
+        }
+    };
+
+    const addMessageInBd = async () => {
+        try {
+            const data = await Api.addMessage({
+                message: typingMessage,
+                tags: ["tag1", "tag9"],
+            });
+            return data;
+        } catch (error) {
+            console.error("Error:", error);
         }
     };
 
@@ -78,8 +97,8 @@ function Chat() {
                 </Button>
             </Form>
             <Container>
-                {messages.map((message, i) => (
-                    <div key={i}>{message.message}</div>
+                {messages.map((message) => (
+                    <div key={message.id}>{message.message}</div>
                 ))}
             </Container>
         </Container>

@@ -12,4 +12,18 @@ export class Api {
         const data = await response.json();
         return data;
     }
+
+    static async addMessage(data: {
+        message: string;
+        tags: Array<string>;
+    }): Promise<number> {
+        const response = await fetch(`${Api.base}/messages`, {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+        return response.json();
+    }
 }
