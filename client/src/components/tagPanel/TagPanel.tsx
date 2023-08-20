@@ -1,27 +1,14 @@
-import { useEffect, useState, Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Button, Col } from "react-bootstrap";
-import { Api, ITag } from "../../api/api";
+import { ITag } from "../../api/api";
 
 interface ITagPanelProps {
-    setActiveTags:  Dispatch<SetStateAction<Array<number>>>
+    setActiveTags:  Dispatch<SetStateAction<Array<number>>>;
+    tags: Array<ITag>;
+    setTags: Dispatch<SetStateAction<Array<ITag>>>;
 }
 
-function TagPanel({ setActiveTags }: ITagPanelProps) {
-    const [tags, setTags] = useState<Array<ITag>>([]);
-
-    const getTags = async () => {
-        try {
-            const data = await Api.getTags();
-            setTags(data);
-        } catch (error) {
-            console.error("Error fetching tags:", error);
-        }
-    };
-
-    useEffect(() => {
-        getTags();
-    }, []);
-
+function TagPanel({ setActiveTags, tags, setTags }: ITagPanelProps) {
     const tagClickHandler = (id: number) => {
         setTags((prev) => {
             return prev.map((tag) => {
@@ -45,7 +32,7 @@ function TagPanel({ setActiveTags }: ITagPanelProps) {
     };
 
     return (
-        <Col md={4} className="border p-3">
+        <Col md={3} className="border p-3">
             {tags.map((tag) => (
                 <Button
                     key={tag.tag_id}

@@ -16,6 +16,7 @@ class Controller {
                 LEFT JOIN tags t ON mt.tag_id = t.tag_id
                 WHERE mt.tag_id = ANY($1) OR mt.tag_id IS NULL
                 GROUP BY m.message_id
+                ORDER BY m.date ASC
                 `,
                 [tagIds]
             );

@@ -1,24 +1,37 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Col, Form, Row } from "react-bootstrap";
-import { Api } from "../../api/api";
+import {
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
+import { Api, ITag } from "../../api/api";
+import { Typeahead } from "react-bootstrap-typeahead";
+import { Option } from "react-bootstrap-typeahead/types/types";
 
 interface IChatProps {
-    activeTags:  Array<number>;
+    activeTags: Array<number>;
+    tags: Array<ITag>;
+    getTags: () => Promise<void>;
 }
 
-function Chat({activeTags}: IChatProps) {
-    const [messages, setMessages] = useState<
-        Array<{
-            id: number;
-            message: string;
-            event: string;
-            tags?: Array <{
-                tag_id: number | null;
-                tag: string | null;
-            }>
-        }>
-    >([]);
+interface IChatMessage {
+    id: number;
+    message: string;
+    event: string;
+    tags?: Array<{
+        tag_id: number | null;
+        tag: string | null;
+    }>;
+}
+
+function Chat({ activeTags, tags, getTags }: IChatProps) {
+    const [messages, setMessages] = useState<Array<IChatMessage>>([]);
     const [typingMessage, setTypingMessage] = useState("");
+    const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     const socket = useMemo(() => new WebSocket("ws://localhost:5000"), []);
 
@@ -52,11 +65,14 @@ function Chat({activeTags}: IChatProps) {
         };
         socket.send(JSON.stringify(message));
         setTypingMessage("");
+        setSelectedTags([]);
     };
 
     const getMessages = useCallback(async () => {
         try {
-            const queryParams = new URLSearchParams({ tagIds: activeTags.join(',') });
+            const queryParams = new URLSearchParams({
+                tagIds: activeTags.join(","),
+            });
             const data = await Api.getMessages(queryParams);
             setMessages(
                 data.map((message) => {
@@ -74,10 +90,11 @@ function Chat({activeTags}: IChatProps) {
     }, [activeTags]);
 
     const addMessageInBd = async () => {
+        const tags = (selectedTags as Array<ITag>).map((el: ITag) => el.tag);
         try {
             const data = await Api.addMessage({
                 message: typingMessage,
-                tags: [],
+                tags: tags,
             });
             return data;
         } catch (error) {
@@ -89,33 +106,88 @@ function Chat({activeTags}: IChatProps) {
         getMessages();
     }, [getMessages]);
 
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    useEffect(() => {
+        getTags();
+    }, [messages, getTags])
+
     return (
-        <Col md={8} className="border p-3">
-            <Row>
-                {messages.map((message) => (
-                    <div key={message.id}>{message.message}</div>
-                ))}
-            </Row>
-            <Row>
-                <Form
-                    onSubmit={(e) => sendMessage(e)}
-                    className="d-flex align-items-center justify-content-center gap-3"
+        <Col md={9} className="border p-3">
+            <Container className="d-flex flex-column justify-content-between h-100">
+                <Container
+                    ref={containerRef}
+                    className="h-100"
+                    style={{ overflowY: "scroll", maxHeight: "90vh" }}
                 >
-                    <Form.Control
-                        placeholder="Enter message"
-                        value={typingMessage}
-                        onChange={(e) => setTypingMessage(e.target.value)}
-                    ></Form.Control>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        value="Send"
-                        className="mr-2"
-                    >
-                        Send
-                    </Button>
-                </Form>
-            </Row>
+                    <Row>
+                        {messages.map((message) => (
+                            <Row
+                                key={message.id}
+                                style={{ borderRadius: "5px" }}
+                                className="bg-light mb-2 mx-0"
+                            >
+                                <Row>
+                                    {message.tags?.map((tag) => (
+                                        <Col
+                                            key={tag.tag_id}
+                                            style={{ borderRadius: "5px" }}
+                                            md={2}
+                                            className="bg-warning m-1 text-center"
+                                        >
+                                            {tag.tag}
+                                        </Col>
+                                    ))}
+                                </Row>
+                                <Row>{message.message}</Row>
+                            </Row>
+                        ))}
+                    </Row>
+                </Container>
+                <Container fluid className="h-50">
+                    <Row className="h-100">
+                        <Form onSubmit={(e) => sendMessage(e)} className="flex">
+                            <Form.Control
+                                as="textarea"
+                                placeholder="Enter message"
+                                value={typingMessage}
+                                onChange={(e) =>
+                                    setTypingMessage(e.target.value)
+                                }
+                                className="my-2"
+                                style={{ height: "50%" }}
+                            ></Form.Control>
+                            <Form.Group className="d-flex w-100">
+                                <Typeahead
+                                    id="basic-typeahead-multiple"
+                                    labelKey="tag"
+                                    multiple
+                                    onChange={setSelectedTags}
+                                    options={tags}
+                                    placeholder="Add tags"
+                                    selected={selectedTags}
+                                    dropup={true}
+                                    allowNew={true}
+                                    newSelectionPrefix="Add new: "
+                                    style={{ width: "90%" }}
+                                />
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    value="Send"
+                                    className="mr-2"
+                                >
+                                    Send
+                                </Button>
+                            </Form.Group>
+                        </Form>
+                    </Row>
+                </Container>
+            </Container>
         </Col>
     );
 }
