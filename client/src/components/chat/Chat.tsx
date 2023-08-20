@@ -14,7 +14,6 @@ import { Option } from "react-bootstrap-typeahead/types/types";
 interface IChatProps {
     activeTags: Array<number>;
     tags: Array<ITag>;
-    getTags: () => Promise<void>;
 }
 
 interface IChatMessage {
@@ -27,7 +26,7 @@ interface IChatMessage {
     }>;
 }
 
-function Chat({ activeTags, tags, getTags }: IChatProps) {
+function Chat({ activeTags, tags }: IChatProps) {
     const [messages, setMessages] = useState<Array<IChatMessage>>([]);
     const [typingMessage, setTypingMessage] = useState("");
     const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
@@ -65,7 +64,6 @@ function Chat({ activeTags, tags, getTags }: IChatProps) {
         };
         socket.send(JSON.stringify(message));
         setTypingMessage("");
-        setSelectedTags([]);
     };
 
     const getMessages = useCallback(async () => {
@@ -112,10 +110,6 @@ function Chat({ activeTags, tags, getTags }: IChatProps) {
         }
     }, [messages]);
 
-    useEffect(() => {
-        getTags();
-    }, [messages, getTags])
-
     return (
         <Col md={9} className="border p-3">
             <Container className="d-flex flex-column justify-content-between h-100">
@@ -127,14 +121,14 @@ function Chat({ activeTags, tags, getTags }: IChatProps) {
                     <Row>
                         {messages.map((message) => (
                             <Row
-                                key={message.id}
+                                key={`message${message.id}`}
                                 style={{ borderRadius: "5px" }}
                                 className="bg-light mb-2 mx-0"
                             >
                                 <Row>
                                     {message.tags?.map((tag) => (
                                         <Col
-                                            key={tag.tag_id}
+                                            key={`tag${tag.tag_id}`}
                                             style={{ borderRadius: "5px" }}
                                             md={2}
                                             className="bg-warning m-1 text-center"

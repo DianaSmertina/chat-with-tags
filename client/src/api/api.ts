@@ -9,7 +9,6 @@ export interface ITag {
     tag_id: number;
     tag: string;
     buttonStyle?: string;
-    label?: string;
 }
 
 export class Api {
@@ -39,8 +38,7 @@ export class Api {
         const response = await fetch(`${Api.base}/tags`);
         const data = await response.json();
         data.forEach((el: ITag) => {
-            el.buttonStyle = "secondary";
-            el.label = el.tag;
+            el.buttonStyle = "secondary"
         });
         return data;
     }

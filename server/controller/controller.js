@@ -8,13 +8,15 @@ class Controller {
         try {
             let messages = [];
             messages = await db.query(`
-                SELECT m.message_id, m.text, m.date, COALESCE(
-                    JSON_AGG(json_build_object('tag_id', t.tag_id, 'tag', t.tag)), '[]'
-                ) AS tags
+                SELECT m.message_id, m.text, m.date, 
+                JSONB_AGG(jsonb_build_object('tag_id', t.tag_id, 'tag', t.tag)) AS tags
                 FROM messages m
                 LEFT JOIN message_tags mt ON m.message_id = mt.message_id
                 LEFT JOIN tags t ON mt.tag_id = t.tag_id
-                WHERE mt.tag_id = ANY($1) OR mt.tag_id IS NULL
+                WHERE  m.message_id IN (
+                    SELECT DISTINCT m.message_id FROM messages m
+                    LEFT JOIN message_tags mt ON m.message_id = mt.message_id WHERE mt.tag_id = ANY($1) OR mt.tag_id IS NULL
+                )
                 GROUP BY m.message_id
                 ORDER BY m.date ASC
                 `,
