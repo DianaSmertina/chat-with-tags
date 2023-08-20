@@ -1,5 +1,7 @@
 import {
+    Dispatch,
     FormEvent,
+    SetStateAction,
     useCallback,
     useEffect,
     useMemo,
@@ -14,6 +16,7 @@ import { Option } from "react-bootstrap-typeahead/types/types";
 interface IChatProps {
     activeTags: Array<number>;
     tags: Array<ITag>;
+    setTags: Dispatch<SetStateAction<Array<ITag>>>;
 }
 
 interface IChatMessage {
@@ -26,7 +29,7 @@ interface IChatMessage {
     }>;
 }
 
-function Chat({ activeTags, tags }: IChatProps) {
+function Chat({ activeTags, tags, setTags }: IChatProps) {
     const [messages, setMessages] = useState<Array<IChatMessage>>([]);
     const [typingMessage, setTypingMessage] = useState("");
     const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
@@ -56,7 +59,8 @@ function Chat({ activeTags, tags }: IChatProps) {
 
     const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const messageId = await addMessageInBd();
+        const messageInfo = await addMessageInBd();
+        const messageId = messageInfo?.messageID;
         const message = {
             id: messageId,
             message: typingMessage,
@@ -64,6 +68,10 @@ function Chat({ activeTags, tags }: IChatProps) {
         };
         socket.send(JSON.stringify(message));
         setTypingMessage("");
+        if (messageInfo?.newTags.length && messageInfo?.newTags.length > 0) {
+            setTags((prev) => [...prev, ...messageInfo.newTags])
+        }
+        setSelectedTags([]);
     };
 
     const getMessages = useCallback(async () => {

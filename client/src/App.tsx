@@ -25,7 +25,7 @@ function App() {
         <Container className="vh-100">
             <Row className="vh-100">
                 <TagPanel setActiveTags={setActiveTags} tags={tags} setTags={setTags} />
-                <Chat activeTags={activeTags} tags={tags} />
+                <Chat activeTags={activeTags} tags={tags} setTags={setTags} />
             </Row>
         </Container>
     );

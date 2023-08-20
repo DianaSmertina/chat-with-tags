@@ -29,7 +29,7 @@ class Controller {
         }
     }
 
-    async getTagId(tag) {
+    async getTag(tag) {
         try {
             const tagInfo = await db.query(
                 "SELECT * FROM tags where tag = $1",
@@ -37,9 +37,10 @@ class Controller {
             );
             if (tagInfo.rowCount === 0) {
                 const newController = new Controller();
-                return (await newController.addNewTag(tag)).rows[0].tag_id;
+                const newTag = await newController.addNewTag(tag);
+                return {id: newTag.rows[0].tag_id, tag: newTag.rows[0].tag, status: "new"};
             }
-            return tagInfo.rows[0].tag_id;
+            return {id: tagInfo.rows[0].tag_id, tag: tagInfo.rows[0].tag, status: "old"};
         } catch (e) {
             console.log(e);
         }
@@ -67,15 +68,18 @@ class Controller {
                     [text]
                 )
             ).rows[0].message_id;
+            const newTags = [];
             for (const element of tags) {
                 const newController = new Controller();
-                const tagID = await newController.getTagId(element);
+                const tag = await newController.getTag(element);
+                const tagID = tag.id;
+                if (tag.status === "new") newTags.push({tag_id: tag.id, tag: tag.tag, buttonStyle: "secondary"})
                 await db.query(
                     "INSERT INTO message_tags(message_id, tag_id) VALUES ($1, $2)",
                     [messageID, tagID]
                 );
             }
-            return res.json(messageID);
+            return res.json({messageID: messageID, newTags: newTags});
         } catch (e) {
             console.log(e);
         }

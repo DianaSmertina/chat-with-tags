@@ -19,11 +19,14 @@ export class Api {
         const data = await response.json();
         return data;
     }
-
+    
     static async addMessage(data: {
         message: string;
         tags: Array<string>;
-    }): Promise<number> {
+    }): Promise<{
+        messageID: number;
+        newTags: Array<ITag>;
+    }> {
         const response = await fetch(`${Api.base}/messages`, {
             method: "POST",
             headers: {
