@@ -1,13 +1,21 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Button, Container, Form } from "react-bootstrap";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Col, Form, Row } from "react-bootstrap";
 import { Api } from "../../api/api";
 
-function Chat() {
+interface IChatProps {
+    activeTags:  Array<number>;
+}
+
+function Chat({activeTags}: IChatProps) {
     const [messages, setMessages] = useState<
         Array<{
             id: number;
             message: string;
             event: string;
+            tags?: Array <{
+                tag_id: number | null;
+                tag: string | null;
+            }>
         }>
     >([]);
     const [typingMessage, setTypingMessage] = useState("");
@@ -46,14 +54,16 @@ function Chat() {
         setTypingMessage("");
     };
 
-    const getMessages = async () => {
+    const getMessages = useCallback(async () => {
         try {
-            const data = await Api.getMessages();
+            const queryParams = new URLSearchParams({ tagIds: activeTags.join(',') });
+            const data = await Api.getMessages(queryParams);
             setMessages(
                 data.map((message) => {
                     return {
                         id: message.message_id,
                         message: message.text,
+                        tags: message.tags,
                         event: "message",
                     };
                 })
@@ -61,13 +71,13 @@ function Chat() {
         } catch (error) {
             console.error("Error fetching messages:", error);
         }
-    };
+    }, [activeTags]);
 
     const addMessageInBd = async () => {
         try {
             const data = await Api.addMessage({
                 message: typingMessage,
-                tags: ["tag1", "tag9"],
+                tags: [],
             });
             return data;
         } catch (error) {
@@ -77,31 +87,36 @@ function Chat() {
 
     useEffect(() => {
         getMessages();
-    }, []);
+    }, [getMessages]);
 
     return (
-        <Container>
-            <Form onSubmit={(e) => sendMessage(e)}>
-                <Form.Control
-                    placeholder="Enter message"
-                    value={typingMessage}
-                    onChange={(e) => setTypingMessage(e.target.value)}
-                ></Form.Control>
-                <Button
-                    type="submit"
-                    variant="primary"
-                    value="Send"
-                    className="mr-2"
-                >
-                    Send
-                </Button>
-            </Form>
-            <Container>
+        <Col md={8} className="border p-3">
+            <Row>
                 {messages.map((message) => (
                     <div key={message.id}>{message.message}</div>
                 ))}
-            </Container>
-        </Container>
+            </Row>
+            <Row>
+                <Form
+                    onSubmit={(e) => sendMessage(e)}
+                    className="d-flex align-items-center justify-content-center gap-3"
+                >
+                    <Form.Control
+                        placeholder="Enter message"
+                        value={typingMessage}
+                        onChange={(e) => setTypingMessage(e.target.value)}
+                    ></Form.Control>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        value="Send"
+                        className="mr-2"
+                    >
+                        Send
+                    </Button>
+                </Form>
+            </Row>
+        </Col>
     );
 }
 
