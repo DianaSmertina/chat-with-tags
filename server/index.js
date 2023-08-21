@@ -23,7 +23,7 @@ class Server {
     addMiddleware() {
         this.app.use(
             cors({
-                origin: "http://localhost:5173",
+                origin: "https://inspiring-brioche-84df34.netlify.app",
             })
         );
         this.app.use(express.json());

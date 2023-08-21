@@ -26,7 +26,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
     const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
-    const socket = useMemo(() => new WebSocket("ws://localhost:5000"), []);
+    const socket = useMemo(() => new WebSocket("ws://chat-with-tags.onrender.com"), []);
 
     useEffect(() => {
         socket.onopen = () => {};

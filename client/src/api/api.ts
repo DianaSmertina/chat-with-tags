@@ -12,7 +12,7 @@ export interface ITag {
 }
 
 export class Api {
-    private static base = "http://localhost:5000/api";
+    private static base = "https://chat-with-tags.onrender.com/api";
 
     static async getMessages(queryParams: URLSearchParams): Promise<Array<IMessage>> {
         const response = await fetch(`${Api.base}/messages?${queryParams}`);
