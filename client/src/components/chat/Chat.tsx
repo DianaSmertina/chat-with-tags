@@ -9,9 +9,10 @@ import {
     useState,
 } from "react";
 import { Button, Col, Container, Form, Row } from "react-bootstrap";
-import { Api, ITag } from "../../api/api";
+import { Api, ITag, IMessage } from "../../api/api";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Option } from "react-bootstrap-typeahead/types/types";
+import "./chat.css";
 
 interface IChatProps {
     activeTags: Array<number>;
@@ -19,18 +20,8 @@ interface IChatProps {
     setTags: Dispatch<SetStateAction<Array<ITag>>>;
 }
 
-interface IChatMessage {
-    id: number;
-    message: string;
-    event: string;
-    tags?: Array<{
-        tag_id: number | null;
-        tag: string | null;
-    }>;
-}
-
 function Chat({ activeTags, tags, setTags }: IChatProps) {
-    const [messages, setMessages] = useState<Array<IChatMessage>>([]);
+    const [messages, setMessages] = useState<Array<IMessage>>([]);
     const [typingMessage, setTypingMessage] = useState("");
     const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -62,9 +53,8 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
         const messageInfo = await addMessageInBd();
         const messageId = messageInfo?.messageID;
         const message = {
-            id: messageId,
-            message: typingMessage,
-            event: "message",
+            message_id: messageId,
+            text: typingMessage,
         };
         socket.send(JSON.stringify(message));
         setTypingMessage("");
@@ -80,16 +70,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
                 tagIds: activeTags.join(","),
             });
             const data = await Api.getMessages(queryParams);
-            setMessages(
-                data.map((message) => {
-                    return {
-                        id: message.message_id,
-                        message: message.text,
-                        tags: message.tags,
-                        event: "message",
-                    };
-                })
-            );
+            setMessages(data);
         } catch (error) {
             console.error("Error fetching messages:", error);
         }
@@ -123,34 +104,31 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
             <Container className="d-flex flex-column justify-content-between h-100">
                 <Container
                     ref={containerRef}
-                    className="h-100"
-                    style={{ overflowY: "scroll", maxHeight: "90vh" }}
+                    className="scroll"
                 >
                     <Row>
                         {messages.map((message) => (
                             <Row
-                                key={`message${message.id}`}
-                                style={{ borderRadius: "5px" }}
-                                className="bg-light mb-2 mx-0"
+                                key={`message${message.message_id}`}
+                                className="bg-light mb-3 mx-0 round"
                             >
                                 <Row>
                                     {message.tags?.map((tag) => (
                                         <Col
                                             key={`tag${tag.tag_id}`}
-                                            style={{ borderRadius: "5px" }}
                                             md={2}
-                                            className="bg-warning m-1 text-center"
+                                            className="bg-primary text-white m-1 text-center round"
                                         >
                                             {tag.tag}
                                         </Col>
                                     ))}
                                 </Row>
-                                <Row>{message.message}</Row>
+                                <Row className="d-flex px-3 pb-2">{message.text}</Row>
                             </Row>
                         ))}
                     </Row>
                 </Container>
-                <Container fluid className="h-50">
+                <Container fluid className="h-40 my-3 p-0">
                     <Row className="h-100">
                         <Form onSubmit={(e) => sendMessage(e)} className="flex">
                             <Form.Control
@@ -160,8 +138,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
                                 onChange={(e) =>
                                     setTypingMessage(e.target.value)
                                 }
-                                className="my-2"
-                                style={{ height: "50%" }}
+                                className="my-2 h-50"
                             ></Form.Control>
                             <Form.Group className="d-flex w-100">
                                 <Typeahead
@@ -175,7 +152,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
                                     dropup={true}
                                     allowNew={true}
                                     newSelectionPrefix="Add new: "
-                                    style={{ width: "90%" }}
+                                    className="w-100"
                                 />
                                 <Button
                                     type="submit"
