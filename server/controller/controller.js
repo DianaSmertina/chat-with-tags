@@ -4,22 +4,26 @@ const { Message, Tag } = require("../models/models");
 class Controller {
     async getMessages(req, res) {
         try {
-            let messages = [];
-            messages = await Message.findAll({
-                include: [{
-                  model: Tag,
-                  through: { attributes: [] },
-                  attributes: ['tag_id', 'tag'],
-                }],
-                attributes: ['message_id', 'text', 'createdAt'],
-                order: [['createdAt', 'ASC']],
+            const tagIds = req.query.tagIds
+                ? req.query.tagIds.split(",").map(Number)
+                : [];
+            const whereCondition = {};
+            if (tagIds && tagIds.length > 0) {
+                whereCondition.tag_id = tagIds;
+            }
+            const messages = await Message.findAll({
+                include: [
+                    {
+                        model: Tag,
+                        through: { attributes: [] },
+                        where: whereCondition,
+                        attributes: ["tag_id", "tag"],
+                        required: false,
+                    },
+                ],
+                attributes: ["message_id", "text", "createdAt"],
+                order: [["createdAt", "ASC"]],
             });
-            // const resultMessages = messages.map(message => ({
-            //     message_id: message.message_id,
-            //     text: message.text,
-            //     date: message.createdAt.toISOString(),
-            //     tags: message.tags || [],
-            // }));
             return res.json(messages);
         } catch (error) {
             console.error("Error fetching messages:", error);
@@ -31,10 +35,21 @@ class Controller {
         try {
             const text = await req.body.message;
             const tags = await req.body.tags;
-            const newMessage = await Message.create({text});
-            const createdTags = await Tag.bulkCreate(tags);
-            await newMessage.addTags(createdTags);
-            return res.json({messageID: messageID, newTags: createdTags});
+            const newMessage = await Message.create({ text });
+            const newTags = [];
+            const allMessageTags = [];
+            for (const tag of tags) {
+                const savedTag = await Tag.findOne({ where: { tag } });
+                if (!savedTag) {
+                    const createdTag = await Tag.create({ tag });
+                    newTags.push(createdTag);
+                    allMessageTags.push(createdTag);
+                } else {
+                    allMessageTags.push(savedTag);
+                }
+            }
+            await newMessage.addTags(allMessageTags);
+            return res.json({ messageID: newMessage.message_id, newTags });
         } catch (e) {
             console.log(e);
         }

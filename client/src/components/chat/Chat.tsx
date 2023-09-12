@@ -80,9 +80,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
     }, [activeTags]);
 
     const addMessageInBd = async () => {
-        const tags = (selectedTags as Array<ITag>).map((el: ITag) => ({
-            tag: el.tag,
-        }));
+        const tags = (selectedTags as Array<ITag>).map((el: ITag) => el.tag);
         try {
             const data = await Api.addMessage({
                 message: typingMessage,
@@ -109,8 +107,9 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
             <Container className="d-flex flex-column justify-content-between h-100">
                 <Container ref={containerRef} className="scroll">
                     <Row>
-                        {messages.map((message) => (
-                            <Row
+                        {messages.map((message) => {
+                            console.log(message);
+                            return (<Row
                                 key={`message${message.message_id}`}
                                 className="bg-light mb-3 mx-0 round"
                             >
@@ -129,7 +128,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
                                     {message.text}
                                 </Row>
                             </Row>
-                        ))}
+                        )})}
                     </Row>
                 </Container>
                 <Container fluid className="h-40 my-3 p-0">
