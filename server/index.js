@@ -15,7 +15,7 @@ class Server {
     async start() {
         try {
             await sequelize.authenticate();
-            await sequelize.sync({force: true});
+            await sequelize.sync();
             const currentServer = this.app.listen(PORT, () => {
                 console.log(`server start on port ${PORT}`);
             });
