@@ -1,14 +1,14 @@
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
-const password = process.env.DB_PASSWORD;
-const Pool = require('pg').Pool;
-const pool = new Pool({
-    user: 'admin',
-    password: password,
-    host: 'dpg-cjg8c3k1ja0c73anvr80-a.frankfurt-postgres.render.com',
-    port: 5432,
-    database: 'chat_lfc5',
-    ssl: true,
-});
+const { Sequelize } = require("sequelize");
+const CONNECTION = process.env.CONNECTION;
 
-module.exports = pool;
+module.exports = new Sequelize(CONNECTION, {
+    port: 5432,
+    ssl: true,
+    dialectOptions: {
+        ssl: {
+            require: true,
+        },
+    },
+});

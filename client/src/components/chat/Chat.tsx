@@ -26,7 +26,10 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
     const [selectedTags, setSelectedTags] = useState<Array<Option>>([]);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
-    const socket = useMemo(() => new WebSocket("wss://chat-with-tags.onrender.com"), []);
+    const socket = useMemo(
+        () => new WebSocket("wss://chat-with-tags.onrender.com"),
+        []
+    );
 
     useEffect(() => {
         socket.onopen = () => {};
@@ -59,7 +62,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
         socket.send(JSON.stringify(message));
         setTypingMessage("");
         if (messageInfo?.newTags.length && messageInfo?.newTags.length > 0) {
-            setTags((prev) => [...prev, ...messageInfo.newTags])
+            setTags((prev) => [...prev, ...messageInfo.newTags]);
         }
         setSelectedTags([]);
     };
@@ -77,7 +80,9 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
     }, [activeTags]);
 
     const addMessageInBd = async () => {
-        const tags = (selectedTags as Array<ITag>).map((el: ITag) => el.tag);
+        const tags = (selectedTags as Array<ITag>).map((el: ITag) => ({
+            tag: el.tag,
+        }));
         try {
             const data = await Api.addMessage({
                 message: typingMessage,
@@ -102,10 +107,7 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
     return (
         <Col md={9} className="border p-3">
             <Container className="d-flex flex-column justify-content-between h-100">
-                <Container
-                    ref={containerRef}
-                    className="scroll"
-                >
+                <Container ref={containerRef} className="scroll">
                     <Row>
                         {messages.map((message) => (
                             <Row
@@ -123,7 +125,9 @@ function Chat({ activeTags, tags, setTags }: IChatProps) {
                                         </Col>
                                     ))}
                                 </Row>
-                                <Row className="d-flex px-3 pb-2">{message.text}</Row>
+                                <Row className="d-flex px-3 pb-2">
+                                    {message.text}
+                                </Row>
                             </Row>
                         ))}
                     </Row>

@@ -22,7 +22,7 @@ export class Api {
     
     static async addMessage(data: {
         message: string;
-        tags: Array<string>;
+        tags: Array<{tag: string}>;
     }): Promise<{
         messageID: number;
         newTags: Array<ITag>;

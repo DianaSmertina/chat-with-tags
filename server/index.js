@@ -1,15 +1,21 @@
 const express = require("express");
 const PORT = process.env.PORT || 5000;
-require("./db");
-require("pg");
 const cors = require("cors");
+const sequelize = require("./db");
+require("pg");
 const ws = require("ws");
 const router = require("./routes/routes");
+var whitelistDomain = [
+    "http://localhost:5173",
+    "https://inspiring-brioche-84df34.netlify.app",
+];
 
 class Server {
     app = express();
-    start() {
+    async start() {
         try {
+            await sequelize.authenticate();
+            await sequelize.sync();
             const currentServer = this.app.listen(PORT, () => {
                 console.log(`server start on port ${PORT}`);
             });
@@ -23,7 +29,10 @@ class Server {
     addMiddleware() {
         this.app.use(
             cors({
-                origin: "https://inspiring-brioche-84df34.netlify.app",
+                origin: function (origin, callback) {
+                    const originIsWhitelisted = whitelistDomain.indexOf(origin) !== -1;
+                    callback(null, originIsWhitelisted);
+                },
             })
         );
         this.app.use(express.json());
